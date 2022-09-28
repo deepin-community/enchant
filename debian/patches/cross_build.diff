@@ -1,0 +1,23 @@
+From: Helmut Grohne <helmut@subdivi.de>
+Last-Modified: 2016-09-03
+Subject: do not supply a bad default for the PKG_CONFIG check
+
+PKG_CHECK_MODULES implicitly checks for a suitable cross pkg-config and uses
+$PKG_CONFIG as a default. The preceeding AC_PATH_PROG supplies that variables
+with its default value "pkg-config" instead of the a value that carries the
+host architecture as a prefix. By removing the (otherwise unused AC_PATH_PROG),
+the implicit check can do the right thing.
+
+Index: enchant-1.6.0/configure.in
+===================================================================
+--- enchant-1.6.0.orig/configure.in
++++ enchant-1.6.0/configure.in
+@@ -48,8 +48,6 @@
+ AC_PROG_CXX(,have_cxx=no)
+ AM_CONDITIONAL(WITH_CXX, test "x$have_cxx" = "xyes")
+ 
+-AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+-
+ PKG_CHECK_MODULES(ENCHANT, [glib-2.0 >= 2.6 gmodule-2.0])
+ 
+ dnl ===========================================================================
