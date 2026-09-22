@@ -1,29 +1,61 @@
-SUBDIRS=. aspell ispell uspell myspell hspell applespell voikko zemberek
+# Makefile.am for Enchant commands
+#
+# Copyright (C) 2003 Dom Lachowicz
+#               2016-2025 Reuben Thomas
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
-INCLUDES=-I$(top_srcdir) $(ENCHANT_CFLAGS) $(CC_WARN_CFLAGS) -DENCHANT_GLOBAL_MODULE_DIR=\"$(libdir)/enchant\" -DENCHANT_GLOBAL_ORDERING=\"$(datadir)/enchant\" -D_ENCHANT_BUILD=1 -DENCHANT_VERSION_STRING=\"@ENCHANT_MAJOR_VERSION@.@ENCHANT_MINOR_VERSION@.@ENCHANT_MICRO_VERSION@\"
+AM_VALAFLAGS = --debug --no-color --vapidir=. --vapidir=$(top_srcdir)/lib --pkg config --pkg configmake --pkg posix --pkg gio-2.0 --pkg gmodule-2.0 --pkg enchant-2
+AM_CPPFLAGS = --include config.h -I$(top_srcdir) $(ISYSTEM)$(top_builddir)/libgnu $(ISYSTEM)$(top_srcdir)/libgnu -I$(top_srcdir)/lib $(GLIB_CFLAGS) $(WARN_VALA_CFLAGS) -DENCHANT_MAJOR_VERSION=\"@ENCHANT_MAJOR_VERSION@\"
 
-lib_LTLIBRARIES = libenchant.la
+VAPIS = config.vapi enchant-2.vapi
 
-libenchant_la_LIBADD= $(ENCHANT_LIBS) @ENCHANT_WIN32_RESOURCE@
+dummy.vala: $(BUILT_VAPIS) $(VAPIS)
+	touch $@
 
-libenchant_la_LDFLAGS = -no-undefined -export-dynamic
-if OS_WIN32
-libenchant_la_LDFLAGS += -avoid-version
-else
-libenchant_la_LDFLAGS += -version-info $(VERSION_INFO)
-endif
+BUILT_SOURCES = dummy.vala $(BUILT_VAPIS) util.h
 
-libenchant_la_DEPENDENCIES = @ENCHANT_WIN32_RESOURCE@
-libenchant_la_SOURCES = prefix.c enchant.c pwl.c enchant.h prefix.h pwl.h
+BUILT_VAPIS = util.vapi
 
-libenchant_includedir = $(includedir)/enchant
-libenchant_include_HEADERS = enchant.h enchant-provider.h enchant++.h
+util.h util.vapi: libutil.la
 
-EXTRA_DIST=enchant.i
+dist_man_MANS = enchant-@ENCHANT_MAJOR_VERSION@.1 enchant-lsmod-@ENCHANT_MAJOR_VERSION@.1
+nodist_doc_DATA = enchant-@ENCHANT_MAJOR_VERSION@.html enchant-lsmod-@ENCHANT_MAJOR_VERSION@.html
 
-if OS_WIN32
+DISTCLEANFILES = $(dist_man_MANS) $(nodist_doc_DATA) dummy.vala
 
-@ENCHANT_WIN32_RESOURCE@ : libenchant.rc
-	$(top_srcdir)/lt-compile-resource libenchant.rc @ENCHANT_WIN32_RESOURCE@
-endif
+.1.html:
+	groff -mandoc -Thtml $< > $@
 
+enchant-@ENCHANT_MAJOR_VERSION@.1: $(builddir)/enchant.1 Makefile.am $(top_builddir)/config.status
+	cp $(abs_builddir)/enchant.1 $@
+
+enchant-lsmod-@ENCHANT_MAJOR_VERSION@.1: $(builddir)/enchant-lsmod.1 Makefile.am $(top_builddir)/config.status
+	cp $(abs_builddir)/enchant-lsmod.1 $@
+
+noinst_LTLIBRARIES = libutil.la
+libutil_la_SOURCES = util.vala
+libutil_la_VALAFLAGS = $(AM_VALAFLAGS) --vapi=util.vapi --header=util.h
+libutil_la_LIBADD = $(GLIB_LIBS)
+
+LDADD = $(top_builddir)/lib/libenchant-@ENCHANT_MAJOR_VERSION@.la $(GLIB_LIBS) $(top_builddir)/libgnu/libgnu.la libutil.la
+bin_PROGRAMS = enchant-@ENCHANT_MAJOR_VERSION@ enchant-lsmod-@ENCHANT_MAJOR_VERSION@
+enchant_@ENCHANT_MAJOR_VERSION@_SOURCES = enchant.vala
+enchant_@ENCHANT_MAJOR_VERSION@_VALAFLAGS = $(AM_VALAFLAGS) --pkg util
+enchant_lsmod_@ENCHANT_MAJOR_VERSION@_SOURCES = enchant-lsmod.vala
+enchant_lsmod_@ENCHANT_MAJOR_VERSION@_VALAFLAGS = $(AM_VALAFLAGS) --pkg util
+
+EXTRA_DIST = enchant.1.in enchant-lsmod.1.in util.h $(VAPIS)
+
+loc-local:
+	$(CLOC) $(ALL_SOURCE_FILES)
+
+ALL_SOURCE_FILES = \
+	Makefile.am \
+	*.vala

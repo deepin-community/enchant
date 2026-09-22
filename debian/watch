@@ -1,2 +1,6 @@
-version=3
-http://www.abisource.com/downloads/enchant/1.6.0 enchant-(.+).tar.gz
+Version: 5
+Source: https://api.github.com/repos/rrthomas/@PACKAGE@/releases
+Matching-Pattern: https://github.com/rrthomas/@PACKAGE@/releases/download/v\d[\.\d]*/@PACKAGE@@ANY_VERSION@@ARCHIVE_EXT@
+Dversion-Mangle: auto
+Repack-Suffix: +dfsg
+Searchmode: plain
