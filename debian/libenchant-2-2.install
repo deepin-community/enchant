@@ -1,0 +1,5 @@
+usr/lib/*/enchant-2/enchant_aspell.so
+usr/lib/*/enchant-2/enchant_hspell.so
+usr/lib/*/enchant-2/enchant_hunspell.so
+usr/lib/*/lib*.so.*
+usr/share/enchant-2/enchant.ordering
